@@ -1,55 +1,55 @@
-interface RelationBody { //Maybe Relation is a distinct type that implements relationbody? Basically: need a way to distinguish a referenced relation from its transcluding its body
+interface RelationBody<T extends Resource> { //Maybe Relation is a distinct type that implements relationbody? Basically: need a way to distinguish a referenced relation from its transcluding its body
 
 }
 
-class Assignable implements RelationBody {
-    constructor(types: Resource[], cardinality: Cardinality) {
-        this.Types = types;
+class Assignable<T extends Resource> implements RelationBody<T> {
+    constructor(type: T, cardinality: Cardinality) {
+        this.Type = type;
         this.Cardinality = cardinality;
     }
-    Types: Resource[] //May need to handle references by name, esp for extensions. Also references to data fields per resource type.
+    Type: T
     Cardinality: Cardinality
 }
 
-function assignable(types: Resource[], cardinality: Cardinality): Assignable {
-    return new Assignable(types, cardinality);
+function assignable<T extends Resource>(type: T, cardinality: Cardinality): Assignable<T> {
+    return new Assignable<T>(type, cardinality);
 }
 
-class And implements RelationBody {
-    constructor(left: RelationBody, right: RelationBody) {
+class And<T extends Resource> implements RelationBody<T> {
+    constructor(left: RelationBody<T>, right: RelationBody<T>) {
         this.Left = left
         this.Right = right
     }
-    Left: RelationBody
-    Right: RelationBody
+    Left: RelationBody<T>
+    Right: RelationBody<T>
 }
 
-function and(left: RelationBody, right: RelationBody): And {
-    return new And(left, right);
+function and<T extends Resource>(left: RelationBody<T>, right: RelationBody<T>): And<T> {
+    return new And<T>(left, right);
 }
 
-class Or implements RelationBody {
-    constructor(left: RelationBody, right: RelationBody) {
+class Or<T extends Resource> implements RelationBody<T> {
+    constructor(left: RelationBody<T>, right: RelationBody<T>) {
         this.Left = left
         this.Right = right
     }    
-    Left: RelationBody
-    Right: RelationBody
+    Left: RelationBody<T>
+    Right: RelationBody<T>
 }
 
-function or(left: RelationBody, right: RelationBody): Or {
-    return new Or(left, right);
+function or<T extends Resource>(left: RelationBody<T>, right: RelationBody<T>): Or<T> {
+    return new Or<T>(left, right);
 }
 
-class Unless implements RelationBody {
-    constructor(left: RelationBody, right: RelationBody) {
+class Unless<T extends Resource> implements RelationBody<T> {
+    constructor(left: RelationBody<T>, right: RelationBody<T>) {
         this.Left = left
         this.Right = right
     }
-    Left: RelationBody
-    Right: RelationBody
+    Left: RelationBody<T>
+    Right: RelationBody<T>
 }
 
-function unless(left: RelationBody, right: RelationBody): Unless {
-    return new Unless(left, right);
+function unless<T extends Resource>(left: RelationBody<T>, right: RelationBody<T>): Unless<T> {
+    return new Unless<T>(left, right);
 }
