@@ -6,13 +6,18 @@ class Relation<T extends Resource> implements RelationBody<T> {
         this.body = null
     }
 
-    sub<U extends Resource>(accessor: (resource: T) => Relation<U>): RelationBody<U> {
-        return accessor(this.resource as T).get_body(); //Actually, this should be a descriptor we can convert into a subrelation expression. Also, it needs this.resource to be populated (by finalizer)
-        //And, in order to wait for that, all relation body evaluation needs to be deferred.
+    sub(accessor: (resource: T) => Relation<Resource>): RelationBody<Resource> {
+        const sub = accessor(this.resource as T);
+        return new SubRelation(this, sub);
     }
     
+    finalize(resource: Resource, propertyName: string) {
+        this.resource = resource;
+        this.name = propertyName;
+    }
+
     private resource: Resource | null; //Backreference to owning resource type, will be populated by finalizer
-    private body_factory: () => RelationBody<T>; //The body should probably be deferred so it can pick up extension properties
+    private body_factory: () => RelationBody<T>;
     private body: RelationBody<T> | null
     
     public name: string | null;

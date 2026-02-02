@@ -2,6 +2,16 @@ interface RelationBody<T extends Resource> { //Maybe Relation is a distinct type
 
 }
 
+class SubRelation implements RelationBody<Resource> {
+    constructor(rel: Relation<Resource>, sub: Relation<Resource>) {
+        this.Rel = rel;
+        this.Sub = sub
+    }
+
+    Rel: Relation<Resource>
+    Sub: Relation<Resource>
+}
+
 class Assignable<T extends Resource> implements RelationBody<T> {
     constructor(type: T, cardinality: Cardinality) {
         this.Type = type;
@@ -11,8 +21,9 @@ class Assignable<T extends Resource> implements RelationBody<T> {
     Cardinality: Cardinality
 }
 
-function assignable<T extends Resource>(type: T, cardinality: Cardinality): Assignable<T> {
-    return new Assignable<T>(type, cardinality);
+function assignable<T extends Resource>(type: new() => T, cardinality: Cardinality): Assignable<T> {
+    const obj : T = get_or_create_singleton(type);
+    return new Assignable<T>(obj, cardinality);
 }
 
 class And<T extends Resource> implements RelationBody<T> {

@@ -12,8 +12,9 @@ import (
 var bootstrapCode string
 
 type Runtime struct {
-	vm            *goja.Runtime
-	tsGetInstance goja.Callable
+	vm                          *goja.Runtime
+	tsGetInstance               goja.Callable
+	finalize_all_resource_types goja.Callable
 }
 
 func NewRuntime() *Runtime {
@@ -25,7 +26,28 @@ func NewRuntime() *Runtime {
 
 func (r *Runtime) Initialize() error {
 	_, err := r.vm.RunString(bootstrapCode)
-	return err
+	if err != nil {
+		return err
+	}
+
+	r.finalize_all_resource_types, err = r.getFunction("finalize_all_resource_types")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Runtime) getFunction(name string) (goja.Callable, error) {
+	v := r.vm.Get(name)
+	if goja.IsUndefined(v) {
+		return nil, fmt.Errorf("%s not found in the global namespace.", name)
+	}
+	if method, ok := goja.AssertFunction(v); ok {
+		return method, nil
+	} else {
+		return nil, fmt.Errorf("%s is not a function", name)
+	}
 }
 
 func (r *Runtime) LoadFile(path string) error {
@@ -39,6 +61,11 @@ func (r *Runtime) LoadFile(path string) error {
 }
 
 func (r *Runtime) PrintTypes() error {
+	_, err := r.finalize_all_resource_types(goja.Undefined())
+	if err != nil {
+		return err
+	}
+
 	for _, name := range r.vm.GlobalObject().GetOwnPropertyNames() {
 		candidate := r.vm.Get(name)
 		if _, ok := goja.AssertConstructor(candidate); ok {
@@ -52,14 +79,9 @@ func (r *Runtime) PrintTypes() error {
 				continue
 			}
 			fmt.Println("class:", object.ClassName()) // should be "Object" (or your class name), NOT "Function"
-			data, err := object.MarshalJSON()
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(data))
 
 			for _, name := range object.GetOwnPropertyNames() {
-				fmt.Println("\t", name)
+				fmt.Println("\t", name) //Might make sense to switch to a visitor pattern here, inject a golang object into some code on the TS side that will walk through the object graph
 			}
 		}
 	}
