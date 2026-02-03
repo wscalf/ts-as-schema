@@ -112,4 +112,23 @@ function visit_all_resource_types(visitor: SchemaVisitor) {
   }
 }
 
-declare function log(...args: any[]): void;
+function get_or_add_relation<T extends Resource>(ctor: new() => T, name: string, rel_factory: () => Relation<T>): Relation<T> {
+  let obj = (get_or_create_singleton(ctor) as any);
+  if (obj[name] === undefined) {
+    obj[name] = rel_factory();
+  }
+
+  return obj[name];
+}
+
+function add_relation<T extends Resource>(ctor: new() => T, name: string, relation: Relation<T>) {
+  let obj = (get_or_create_singleton(ctor) as any);
+
+  obj[name] = relation;
+}
+
+function get_relation<T extends Resource>(ctor: new() => T, name: string): Relation<T> {
+   let obj = (get_or_create_singleton(ctor) as any);
+
+   return obj[name];
+}
