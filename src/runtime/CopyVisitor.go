@@ -42,7 +42,7 @@ func (v *CopyVisitor) VisitUnless(left any, right any) any {
 }
 
 func (v *CopyVisitor) VisitRelationExpression(name string) any {
-	fmt.Println("Visit Relation Ref")
+	fmt.Println("Visit Relation Ref: ", name)
 	return &Ref{Name: name}
 }
 
@@ -52,19 +52,19 @@ func (v *CopyVisitor) VisitSubRelationExpression(name string, sub string) any {
 }
 
 func (v *CopyVisitor) VisitAssignableExpression(typeName string, cardinality string) any {
-	fmt.Println("Visit Assignable")
+	fmt.Println("Visit Assignable: ", typeName)
 	return &Assignable{Type: typeName, Cardinality: cardinality}
 }
 
 // Construct relation expression
 func (v *CopyVisitor) VisitRelation(name string, body any) any {
-	fmt.Println("Visit Relation")
+	fmt.Println("Visit Relation: ", name)
 	return &Relation{Name: name, Body: body}
 }
 
 // Construct type expression
 func (v *CopyVisitor) VisitType(name string, relations []*Relation) any {
-	fmt.Println("Visit Type")
+	fmt.Println("Visit Type: ", name)
 	t := &Type{Name: name, Relations: relations}
 
 	v.schema.Types = append(v.schema.Types, t)

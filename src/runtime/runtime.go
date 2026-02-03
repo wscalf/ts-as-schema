@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/dop251/goja"
 )
@@ -39,6 +40,16 @@ func (r *Runtime) Initialize() error {
 	if err != nil {
 		return err
 	}
+
+	r.vm.Set("log", func(call goja.FunctionCall) goja.Value {
+		parts := make([]string, 0, len(call.Arguments))
+		for _, a := range call.Arguments {
+			// Goja's String() is reasonable for debugging.
+			parts = append(parts, a.String())
+		}
+		fmt.Fprintln(os.Stdout, strings.Join(parts, " "))
+		return goja.Undefined()
+	})
 
 	return nil
 }
@@ -76,13 +87,13 @@ func (r *Runtime) LoadFile(path string) error {
 func (r *Runtime) PrintTypes() error {
 	_, err := r.finalize_all_resource_types(goja.Undefined())
 	if err != nil {
-		return err
+		return fmt.Errorf("error in finalizing process: %w", err)
 	}
 
 	visitor := NewCopyVisitor()
 	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(visitor))
 	if err != nil {
-		return err
+		return fmt.Errorf("error in schema evaluation process: %w", err)
 	}
 
 	output, err := json.MarshalIndent(visitor.schema, "  ", "    ")

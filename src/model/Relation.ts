@@ -7,16 +7,19 @@ class Relation<T extends Resource> implements RelationBody<T> {
     }
 
     sub(accessor: (resource: T) => Relation<Resource>): RelationBody<Resource> {
-        const sub = accessor(this.resource as T);
+        if (this.resource == null) {
+            throw new Error(`no resource attached to relation named ${this.name} - was it finalized?`);
+        }
+        const sub = accessor(this.resource);
         return new SubRelation(this, sub);
     }
     
-    finalize(resource: Resource, propertyName: string) {
+    finalize(resource: T, propertyName: string) {
         this.resource = resource;
         this.name = propertyName;
     }
 
-    private resource: Resource | null; //Backreference to owning resource type, will be populated by finalizer
+    private resource: T | null; //Backreference to owning resource type, will be populated by finalizer
     private body_factory: () => RelationBody<T>;
     private body: RelationBody<T> | null
     
