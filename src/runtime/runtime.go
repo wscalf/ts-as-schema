@@ -2,6 +2,7 @@ package runtime
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -13,14 +14,13 @@ var bootstrapCode string
 
 type Runtime struct {
 	vm                          *goja.Runtime
-	tsGetInstance               goja.Callable
 	finalize_all_resource_types goja.Callable
+	visit_all_resource_types    goja.Callable
 }
 
 func NewRuntime() *Runtime {
 	return &Runtime{
-		vm:            goja.New(),
-		tsGetInstance: nil,
+		vm: goja.New(),
 	}
 }
 
@@ -31,6 +31,11 @@ func (r *Runtime) Initialize() error {
 	}
 
 	r.finalize_all_resource_types, err = r.getFunction("finalize_all_resource_types")
+	if err != nil {
+		return err
+	}
+
+	r.visit_all_resource_types, err = r.getFunction("visit_all_resource_types")
 	if err != nil {
 		return err
 	}
@@ -50,6 +55,14 @@ func (r *Runtime) getFunction(name string) (goja.Callable, error) {
 	}
 }
 
+func (r *Runtime) call(this *goja.Object, name string, args ...goja.Value) (goja.Value, error) {
+	if fn, ok := goja.AssertFunction(this.Get(name)); ok {
+		return fn(this, args...)
+	} else {
+		return nil, fmt.Errorf("object contains no method %s", name)
+	}
+}
+
 func (r *Runtime) LoadFile(path string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -66,26 +79,17 @@ func (r *Runtime) PrintTypes() error {
 		return err
 	}
 
-	for _, name := range r.vm.GlobalObject().GetOwnPropertyNames() {
-		candidate := r.vm.Get(name)
-		if _, ok := goja.AssertConstructor(candidate); ok {
-			if name == "__extends" { //Not sure what this is about, but suppress for now
-				continue
-			}
-			fmt.Println(name)
-			object, err := r.getInstance(name)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			fmt.Println("class:", object.ClassName()) // should be "Object" (or your class name), NOT "Function"
-
-			for _, name := range object.GetOwnPropertyNames() {
-				fmt.Println("\t", name) //Might make sense to switch to a visitor pattern here, inject a golang object into some code on the TS side that will walk through the object graph
-			}
-		}
+	visitor := NewCopyVisitor()
+	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(visitor))
+	if err != nil {
+		return err
 	}
-	return nil
+
+	output, err := json.MarshalIndent(visitor.schema, "  ", "    ")
+	if err == nil {
+		fmt.Println(string(output))
+	}
+	return err
 }
 
 func (r *Runtime) getInstance(typeName string) (*goja.Object, error) {
