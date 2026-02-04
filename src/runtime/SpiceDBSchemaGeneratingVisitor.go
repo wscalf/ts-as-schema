@@ -47,11 +47,11 @@ func (v *SpiceDBSchemaGeneratingVisitor) VisitRelationExpression(name string) *c
 }
 
 func (v *SpiceDBSchemaGeneratingVisitor) VisitSubRelationExpression(name string, sub string) *corev1.SetOperation_Child {
-	return namespace.TupleToUserset(name, sub)
+	return namespace.TupleToUserset(tuple_relation_name_from_relation_name(name), sub) //For rel->subrel expressions, use the tuple relation name
 }
 
 func (v *SpiceDBSchemaGeneratingVisitor) VisitAssignableExpression(typeNamespace string, typeName string, cardinality string) *corev1.SetOperation_Child {
-	tuple_relation_name := "t_" + v.currentRelationName
+	tuple_relation_name := tuple_relation_name_from_relation_name(v.currentRelationName)
 
 	var allowed_relation *corev1.AllowedRelation
 	if cardinality == "All" {
@@ -88,6 +88,10 @@ func (v *SpiceDBSchemaGeneratingVisitor) VisitType(ns string, name string, relat
 	v.elements = append(v.elements, zanzibar_namespace)
 
 	return zanzibar_namespace
+}
+
+func tuple_relation_name_from_relation_name(name string) string {
+	return "t_" + name
 }
 
 func spiceDBTypeName(ns string, name string) string {
