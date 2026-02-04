@@ -1,12 +1,15 @@
 class Resource {
   constructor() {
     this.Name = "";
+    this.Namespace = "";
   }
 
-  visit(ns: string, visitor: SchemaVisitor): any {
+  visit(visitor: SchemaVisitor): any {
     const name = this.Name;
+    const ns = this.Namespace;
     let relations: any[] = [];
 
+    visitor.BeginType(ns, name);
     const props = Object.getOwnPropertyNames(this)
     for (const name of props) {
       const v = (this as any)[name];
@@ -31,7 +34,9 @@ class Resource {
   }
 
   Name: string
-  finalize(name: string): void {
+  Namespace: string
+  finalize(namespace: string, name: string): void {
+    this.Namespace = namespace;
     this.Name = name;
     this.finalizeRelations();
   }
@@ -58,10 +63,8 @@ function finalize_all_resource_types() {
     instance.applyExtensions();
   })
 
-
   _apply_to_all_resource_types((ns, typeName, instance) => {
-    log("finalizing: ", ns, ".", typeName);
-    instance.finalize(typeName);
+    instance.finalize(ns, typeName);
   })
 }
 
@@ -134,7 +137,7 @@ class Set {
 
 function visit_all_resource_types(visitor: SchemaVisitor) {
   _apply_to_all_resource_types((ns, typeName, instance) => {
-    instance.visit(ns, visitor);
+    instance.visit(visitor);
   })
 }
 

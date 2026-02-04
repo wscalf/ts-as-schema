@@ -2,7 +2,6 @@ package runtime
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -90,15 +89,18 @@ func (r *Runtime) PrintTypes() error {
 		return fmt.Errorf("error in finalizing process: %w", err)
 	}
 
-	visitor := NewCopyVisitor()
+	//visitor := NewCopyVisitor()
+	visitor := NewSpiceDBSchemaGeneratingVisitor()
 	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(visitor))
 	if err != nil {
 		return fmt.Errorf("error in schema evaluation process: %w", err)
 	}
 
-	output, err := json.MarshalIndent(visitor.schema, "  ", "    ")
+	//output, err := json.MarshalIndent(visitor.schema, "  ", "    ")
+	output, err := visitor.Generate()
 	if err == nil {
-		fmt.Println(string(output))
+		fmt.Println("SpiceDB Schema:")
+		fmt.Println(output)
 	}
 	return err
 }

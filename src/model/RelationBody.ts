@@ -25,11 +25,11 @@ class Assignable<T extends Resource> implements RelationBody<T> {
     Cardinality: Cardinality
 
     public Visit(visitor: SchemaVisitor): any {
-        return visitor.VisitAssignableExpression(this.Type.Name, Cardinality[this.Cardinality]);
+        return visitor.VisitAssignableExpression(this.Type.Namespace, this.Type.Name, Cardinality[this.Cardinality]);
     }
 }
 
-function assignable<T extends Resource>(type: new() => T, cardinality: Cardinality): Assignable<T> {
+function assignable<T extends Resource>(cardinality: Cardinality, type: new() => T): Assignable<T> {
     const obj : T = get_or_create_singleton(type);
     return new Assignable<T>(obj, cardinality);
 }

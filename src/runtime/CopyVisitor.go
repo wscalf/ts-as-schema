@@ -51,15 +51,23 @@ func (v *CopyVisitor) VisitSubRelationExpression(name string, sub string) any {
 	return &Ref{Name: name, Sub: sub}
 }
 
-func (v *CopyVisitor) VisitAssignableExpression(typeName string, cardinality string) any {
-	fmt.Println("Visit Assignable: ", typeName)
+func (v *CopyVisitor) VisitAssignableExpression(typeNamespace string, typeName string, cardinality string) any {
+	fmt.Println("Visit Assignable: ", typeNamespace, ".", typeName)
 	return &Assignable{Type: typeName, Cardinality: cardinality}
+}
+
+func (v *CopyVisitor) BeginRelation(name string) {
+
 }
 
 // Construct relation expression
 func (v *CopyVisitor) VisitRelation(name string, body any) any {
 	fmt.Println("Visit Relation: ", name)
 	return &Relation{Name: name, Body: body}
+}
+
+func (v *CopyVisitor) BeginType(namespace string, name string) {
+
 }
 
 // Construct type expression

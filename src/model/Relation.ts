@@ -40,6 +40,7 @@ class Relation<T extends Resource> implements RelationBody<T> {
     }
 
     public VisitRelation(visitor: SchemaVisitor): any {
+        visitor.BeginRelation(this.get_name());
         const body = this.get_body().Visit(visitor);
         return visitor.VisitRelation(this.get_name(), body);
     }

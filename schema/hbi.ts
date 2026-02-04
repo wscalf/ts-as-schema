@@ -1,6 +1,6 @@
 namespace hbi {
     export class host extends Resource {    
-        private workspace = new Relation<rbac.workspace>(() => assignable(rbac.workspace, Cardinality.ExactlyOne))
+        private workspace = new Relation<rbac.workspace>(() => assignable(Cardinality.ExactlyOne, rbac.workspace))
         
         view = new Relation(() => rbac.has_permission_on_workspace(this.workspace, this.inventory_host_view));
         update = new Relation(() => rbac.has_permission_on_workspace(this.workspace, this.inventory_host_update));
