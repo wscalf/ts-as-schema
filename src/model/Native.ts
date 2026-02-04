@@ -15,7 +15,7 @@ interface SchemaVisitor {
     VisitRelation(name: string, body: any): any
 
     // Construct type expression
-    VisitType(name: string, relations: any[]): any
+    VisitType(namespace: string, name: string, relations: any[]): any
 }
 
 declare function log(...args: any[]): void;

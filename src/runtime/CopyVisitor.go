@@ -63,9 +63,9 @@ func (v *CopyVisitor) VisitRelation(name string, body any) any {
 }
 
 // Construct type expression
-func (v *CopyVisitor) VisitType(name string, relations []*Relation) any {
-	fmt.Println("Visit Type: ", name)
-	t := &Type{Name: name, Relations: relations}
+func (v *CopyVisitor) VisitType(namespace string, name string, relations []*Relation) any {
+	fmt.Println("Visit Type: ", namespace, ".", name)
+	t := &Type{Namespace: namespace, Name: name, Relations: relations}
 
 	v.schema.Types = append(v.schema.Types, t)
 	return t
@@ -93,6 +93,7 @@ type Relation struct {
 }
 
 type Type struct {
+	Namespace string      `json:"namespace"`
 	Name      string      `json:"name"`
 	Relations []*Relation `json:"relations"`
 }

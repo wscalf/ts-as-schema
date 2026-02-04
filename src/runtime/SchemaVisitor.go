@@ -12,5 +12,5 @@ type SchemaVisitor interface {
 	VisitRelation(name string, body any) any
 
 	// Construct type expression
-	VisitType(name string, relations []any) any
+	VisitType(namespace string, name string, relations []any) any
 }

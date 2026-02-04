@@ -1,16 +1,16 @@
+namespace hbi {
+    export class host extends Resource {    
+        private workspace = new Relation<rbac.workspace>(() => assignable(rbac.workspace, Cardinality.ExactlyOne))
+        
+        view = new Relation(() => rbac.has_permission_on_workspace(this.workspace, this.inventory_host_view));
+        update = new Relation(() => rbac.has_permission_on_workspace(this.workspace, this.inventory_host_update));
+        
+        private inventory_host_view!: rbac.workspace_permission
+        private inventory_host_update!: rbac.workspace_permission
 
-class host extends Resource {
-    
-    workspace = new Relation<workspace>(() => assignable(workspace, Cardinality.ExactlyOne))
-    
-    view = new Relation(() => this.inventory_host_view(this.workspace));
-    update = new Relation(() => this.inventory_host_update(this.workspace));
-    
-    inventory_host_view!: workspace_permission
-    inventory_host_update!: workspace_permission
-
-    override applyExtensions(): void {
-        this.inventory_host_view = add_v1_based_workspace_permission("inventory", "hosts", "read", "inventory_host_view");
-        this.inventory_host_update = add_v1_based_workspace_permission("inventory", "hosts", "write", "inventory_host_update");
+        override applyExtensions(): void {
+            this.inventory_host_view = rbac.v1_based_workspace_permission("inventory", "hosts", "read", "inventory_host_view");
+            this.inventory_host_update = rbac.v1_based_workspace_permission("inventory", "hosts", "write", "inventory_host_update");
+        }
     }
 }
