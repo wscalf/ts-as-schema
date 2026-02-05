@@ -119,8 +119,6 @@ function _apply_to_all_resource_types(operation: (ns: string, typeName: string, 
         visited_types.add(ctor);
       }
     }
-
-
   }
 }
 
