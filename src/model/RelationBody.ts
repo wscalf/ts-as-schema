@@ -17,21 +17,23 @@ class SubRelation implements RelationBody<Resource> {
 }
 
 class Assignable<T extends Resource> implements RelationBody<T> {
-    constructor(type: T, cardinality: Cardinality) {
+    constructor(type: T, cardinality: Cardinality, dataType: DataType) {
         this.Type = type;
         this.Cardinality = cardinality;
+        this.DataType = dataType;
     }
     Type: T
     Cardinality: Cardinality
+    DataType: DataType
 
     public Visit(visitor: SchemaVisitor): any {
-        return visitor.VisitAssignableExpression(this.Type.Namespace, this.Type.Name, Cardinality[this.Cardinality]);
+        return visitor.VisitAssignableExpression(this.Type.Namespace, this.Type.Name, Cardinality[this.Cardinality], this.DataType.visit(visitor));
     }
 }
 
-function assignable<T extends Resource>(cardinality: Cardinality, type: new() => T): Assignable<T> {
+function assignable<T extends Resource>(cardinality: Cardinality, type: new() => T, dataType: DataType): Assignable<T> {
     const obj : T = get_or_create_singleton(type);
-    return new Assignable<T>(obj, cardinality);
+    return new Assignable<T>(obj, cardinality, dataType);
 }
 
 class And<T extends Resource> implements RelationBody<T> {

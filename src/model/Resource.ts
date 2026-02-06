@@ -8,6 +8,7 @@ class Resource {
     const name = this.Name;
     const ns = this.Namespace;
     let relations: any[] = [];
+    let fields: any[] = [];
 
     visitor.BeginType(ns, name);
     const props = Object.getOwnPropertyNames(this)
@@ -16,9 +17,12 @@ class Resource {
       if (v instanceof Relation) {
         relations.push(v.VisitRelation(visitor));
       }
+      else if (v instanceof Field) {
+        fields.push(v.visit(name, visitor));
+      }
     }
 
-    return visitor.VisitType(ns, name, relations);
+    return visitor.VisitType(ns, name, relations, fields);
   }
 
   applyExtensions() {}

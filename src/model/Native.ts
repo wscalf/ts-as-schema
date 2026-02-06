@@ -9,7 +9,7 @@ interface SchemaVisitor {
     VisitUnless(left: any, right: any): any
     VisitRelationExpression(name: string): any
     VisitSubRelationExpression(name: string, sub: string): any
-    VisitAssignableExpression(typeNamespace: string | null, typeName: string, cardinality: string): any
+    VisitAssignableExpression(typeNamespace: string, typeName: string, cardinality: string, dataType: any): any
 
     BeginRelation(name: string): void
     // Construct relation expression
@@ -17,7 +17,14 @@ interface SchemaVisitor {
 
     BeginType(namespace: string, name: string): void
     // Construct type expression
-    VisitType(namespace: string, name: string, relations: any[]): any
+    VisitType(namespace: string, name: string, relations: any[], dataFields: any[]): any
+
+    VisitDataField(name: string, required: boolean, type: any): any
+    
+    VisitCompositeDataType(types: any[]): any //Note sure name and namespace matter here, actually
+    VisitUUIDDataType(): any
+    VisitNumericIDDataType(min: number | null, max: number | null): any
+    VisitTextDataType(minLength: number | null, maxLength: number | null, regex: string | null): any
 }
 
 declare function log(...args: any[]): void;

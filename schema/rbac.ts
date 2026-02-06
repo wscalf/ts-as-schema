@@ -6,18 +6,18 @@ namespace rbac {
 
     @resource_type("role")
     class role extends Resource {
-        any_any_any = new Relation<principal>(() => assignable(Cardinality.All, principal));
+        any_any_any = new Relation<principal>(() => assignable(Cardinality.All, principal, uuid()));
     }
 
     @resource_type("role_binding")
     class role_binding extends Resource {
-        granted = new Relation<role>(() => assignable(Cardinality.Any, role));
-        subject = new Relation<principal>(() => assignable(Cardinality.Any, principal));
+        granted = new Relation<role>(() => assignable(Cardinality.Any, role, uuid()));
+        subject = new Relation<principal>(() => assignable(Cardinality.Any, principal, uuid()));
     }
 
     export class workspace extends Resource { //Exported types are fully visible at runtime
-        parent: Relation<workspace> = new Relation<workspace>(() => assignable(Cardinality.ExactlyOne, workspace));
-        binding: Relation<role_binding> = new Relation<role_binding>(() => assignable(Cardinality.Any, role_binding));
+        parent: Relation<workspace> = new Relation<workspace>(() => assignable(Cardinality.ExactlyOne, workspace, uuid()));
+        binding: Relation<role_binding> = new Relation<role_binding>(() => assignable(Cardinality.Any, role_binding, uuid()));
     }
 
     export type workspace_permission = (w: Relation<workspace>) => RelationBody<Resource>
@@ -52,6 +52,6 @@ namespace rbac {
     }
 
     function _get_or_add_v1_role_permission(name: string): Relation<principal> {
-        return get_or_add_relation(role, name, () => new Relation<principal>(() => assignable(Cardinality.All, principal)));
+        return get_or_add_relation(role, name, () => new Relation<principal>(() => assignable(Cardinality.All, principal, all(principal))));
     }
 }

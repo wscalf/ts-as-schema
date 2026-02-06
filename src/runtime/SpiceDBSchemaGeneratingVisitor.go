@@ -50,7 +50,7 @@ func (v *SpiceDBSchemaGeneratingVisitor) VisitSubRelationExpression(name string,
 	return namespace.TupleToUserset(tuple_relation_name_from_relation_name(name), sub) //For rel->subrel expressions, use the tuple relation name
 }
 
-func (v *SpiceDBSchemaGeneratingVisitor) VisitAssignableExpression(typeNamespace string, typeName string, cardinality string) *corev1.SetOperation_Child {
+func (v *SpiceDBSchemaGeneratingVisitor) VisitAssignableExpression(typeNamespace string, typeName string, cardinality string, data_type any) *corev1.SetOperation_Child {
 	tuple_relation_name := tuple_relation_name_from_relation_name(v.currentRelationName)
 
 	var allowed_relation *corev1.AllowedRelation
@@ -81,13 +81,34 @@ func (v *SpiceDBSchemaGeneratingVisitor) BeginType(namespace string, name string
 }
 
 // Construct type expression
-func (v *SpiceDBSchemaGeneratingVisitor) VisitType(ns string, name string, relations []*corev1.Relation) *corev1.NamespaceDefinition {
+func (v *SpiceDBSchemaGeneratingVisitor) VisitType(ns string, name string, relations []*corev1.Relation, _ []any) *corev1.NamespaceDefinition {
 	zanzibar_namespace := namespace.Namespace(spiceDBTypeName(ns, name)) //Need to handle namespace here
 	zanzibar_namespace.Relation = append(relations, v.tuple_relations...)
 
 	v.elements = append(v.elements, zanzibar_namespace)
 
 	return zanzibar_namespace
+}
+
+// SpiceDB schema doesn't reflect data types
+func (v *SpiceDBSchemaGeneratingVisitor) VisitDataField(name string, required bool, data_type any) any {
+	return nil
+}
+
+func (v *SpiceDBSchemaGeneratingVisitor) VisitCompositeDataType(data_types []any) any {
+	return nil
+}
+
+func (v *SpiceDBSchemaGeneratingVisitor) VisitUUIDDataType() any {
+	return nil
+}
+
+func (v *SpiceDBSchemaGeneratingVisitor) VisitNumericIDDataType(min *int, max *int) any {
+	return nil
+}
+
+func (v *SpiceDBSchemaGeneratingVisitor) VisitTextDataType(minLength *int, maxLength *int, regex *string) any {
+	return nil
 }
 
 func tuple_relation_name_from_relation_name(name string) string {
