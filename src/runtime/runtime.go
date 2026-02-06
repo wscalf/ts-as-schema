@@ -2,6 +2,7 @@ package runtime
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -89,20 +90,39 @@ func (r *Runtime) PrintTypes() error {
 		return fmt.Errorf("error in finalizing process: %w", err)
 	}
 
-	//visitor := NewCopyVisitor()
-	visitor := NewSpiceDBSchemaGeneratingVisitor()
-	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(visitor))
+	//spiceDbVisitor := NewCopyVisitor()
+	spiceDbVisitor := NewSpiceDBSchemaGeneratingVisitor()
+	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(spiceDbVisitor))
 	if err != nil {
 		return fmt.Errorf("error in schema evaluation process: %w", err)
 	}
 
 	//output, err := json.MarshalIndent(visitor.schema, "  ", "    ")
-	output, err := visitor.Generate()
-	if err == nil {
-		fmt.Println("SpiceDB Schema:")
-		fmt.Println(output)
+	output, err := spiceDbVisitor.Generate()
+	if err != nil {
+		return err
 	}
-	return err
+
+	fmt.Println("SpiceDB Schema:")
+	fmt.Println(output)
+
+	jsonSchemaVisitor := NewJSONSchemaVisitor()
+	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(jsonSchemaVisitor))
+	if err != nil {
+		return fmt.Errorf("error in second schema evaluation (for JSONSchema): %w", err)
+	}
+
+	for key, schema := range jsonSchemaVisitor.schemas {
+		data, err := json.MarshalIndent(schema, "", "  ")
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(key, ":")
+		fmt.Println(string(data))
+	}
+
+	return nil
 }
 
 func (r *Runtime) getInstance(typeName string) (*goja.Object, error) {

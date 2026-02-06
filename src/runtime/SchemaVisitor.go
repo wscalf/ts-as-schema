@@ -16,6 +16,7 @@ type SchemaVisitor interface {
 	// Construct type expression
 	VisitType(namespace string, name string, relations []any, data_fields []any) any
 
+	BeginDataField(name string)
 	VisitDataField(name string, required bool, data_type any) any
 
 	VisitCompositeDataType(data_types []any) any

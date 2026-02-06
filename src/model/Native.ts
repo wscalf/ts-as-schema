@@ -19,6 +19,7 @@ interface SchemaVisitor {
     // Construct type expression
     VisitType(namespace: string, name: string, relations: any[], dataFields: any[]): any
 
+    BeginDataField(name: string): void;
     VisitDataField(name: string, required: boolean, type: any): any
     
     VisitCompositeDataType(types: any[]): any //Note sure name and namespace matter here, actually

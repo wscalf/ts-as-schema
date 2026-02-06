@@ -91,6 +91,10 @@ func (v *SpiceDBSchemaGeneratingVisitor) VisitType(ns string, name string, relat
 }
 
 // SpiceDB schema doesn't reflect data types
+func (v *SpiceDBSchemaGeneratingVisitor) BeginDataField(name string) {
+
+}
+
 func (v *SpiceDBSchemaGeneratingVisitor) VisitDataField(name string, required bool, data_type any) any {
 	return nil
 }

@@ -8,6 +8,7 @@ class Field {
     }
 
     visit(name: string, visitor: SchemaVisitor): any {
-        return visitor.VisitDataField(name, this.required, this.dataType);
+        visitor.BeginDataField(name);
+        return visitor.VisitDataField(name, this.required, this.dataType.visit(visitor));
     }
 }
