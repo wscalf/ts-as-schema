@@ -14,8 +14,8 @@ namespace hbi {
         private inventory_host_update!: rbac.workspace_permission
 
         override applyExtensions(): void {
-            this.inventory_host_view = rbac.v1_based_workspace_permission("inventory", "hosts", "read", "inventory_host_view");
-            this.inventory_host_update = rbac.v1_based_workspace_permission("inventory", "hosts", "write", "inventory_host_update");
+            this.inventory_host_view = rbac.create_v1_based_workspace_permission("inventory", "hosts", "read", "inventory_host_view");
+            this.inventory_host_update = rbac.create_v1_based_workspace_permission("inventory", "hosts", "write", "inventory_host_update");
         }
     }
 }

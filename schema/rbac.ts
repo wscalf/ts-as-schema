@@ -26,7 +26,7 @@ namespace rbac {
         return perm(workspace);
     }
 
-    export function v1_based_workspace_permission(application: string, resource: string, verb: string, v2_perm: string): workspace_permission {   
+    export function create_v1_based_workspace_permission(application: string, resource: string, verb: string, v2_perm: string): workspace_permission {   
         if (get_relation(workspace, v2_perm) != undefined) { //This permission has already been added, so we can short-circuit out
             return (w: Relation<workspace>) => w.sub(r => (r as any)[v2_perm]);
         }
