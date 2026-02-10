@@ -86,6 +86,7 @@ func (v *JSONSchemaVisitor) handleArrayAssignable(required bool, data_type *json
 
 	if required {
 		arr.MinItems = IntPtr(1)
+		v.required_fields = append(v.required_fields, v.current_element)
 	}
 
 	return arr
