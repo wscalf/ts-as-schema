@@ -80,6 +80,6 @@ function numeric_id({min = null, max = null}: {min?: number | null, max?: number
 function all(ctor: new() => Resource): Textual {
     const instance = get_or_create_singleton(ctor);
     
-    const expr = `${instance.Name}:\\*`
+    const expr = `${instance.Namespace}/${instance.Name}:\\*` //SpiceDB-specific formatting
     return text({regex: expr});
 }
