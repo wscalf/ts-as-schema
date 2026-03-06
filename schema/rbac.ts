@@ -65,6 +65,17 @@ namespace rbac /* Everything in here has a reporter type of 'rbac' */ {
         const workspace_v2_perm = new Relation(() => or(workspace_obj.binding.sub(r => get_relation(role_binding, v2_perm)), workspace_obj.parent.sub(r => get_relation(workspace, v2_perm))));
         add_relation(workspace, v2_perm, workspace_v2_perm);
 
+        // Handle ensuring that being assigned any 'read' permission also lights up the 'view_metadata' permission
+        if (verb === "read") {
+            let view_metdata = get_relation(workspace, "view_metadata");
+            if (view_metdata) { //Add this permission to the ors
+                view_metdata.replace_body(body => or(body, workspace_v2_perm));
+            } else {
+                add_relation(workspace, "view_metadata", new Relation(() => workspace_v2_perm));
+            }
+
+        }
+
         return (w: Relation<workspace>) => w.sub(r => get_relation(workspace, v2_perm)); //Finally, this is what really goes in the permission object - an accessor that finds the v2_perm relation on the workspace
     }
 

@@ -1,3 +1,5 @@
+type RelationMutator<T extends Resource> = (body: RelationBody<T>) => RelationBody<T>;
+
 class Relation<T extends Resource> implements RelationBody<T> {
     constructor(body_factory: () => RelationBody<T>) {
         this.name = null;
@@ -38,13 +40,18 @@ class Relation<T extends Resource> implements RelationBody<T> {
 
         return this.body;
     }
-
+    
+    public replace_body(mutator: RelationMutator<T>): void {
+        let body = this.get_body();
+        this.body = mutator(body);
+    }
+    
     public VisitRelation(visitor: SchemaVisitor): any {
         visitor.BeginRelation(this.get_name());
         const body = this.get_body().Visit(visitor);
         return visitor.VisitRelation(this.get_name(), body);
     }
-
+    
     public Visit(visitor: SchemaVisitor): any { //Problem- relations impl RelationBody<T> so they can be used as references, but they're also visitable as schema, and this doesn't distinguish, leading to relation bodies showing up where the references belong
         return visitor.VisitRelationExpression(this.get_name());
     }
