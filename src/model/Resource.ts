@@ -60,8 +60,17 @@ function get_or_create_singleton<T extends Resource>(ctor: new() => T): T {
   return obj.__instance__;
 }
 
+let _namespace_extensions: (() => void)[] = []
+function register_extension_invocation(invocation: () => void): void {
+  _namespace_extensions.push(invocation);
+}
+
 function finalize_all_resource_types() {
   const globals = globalThis as Record<string, any>;
+
+  _namespace_extensions.forEach(invocation => {
+    invocation()
+  });
 
   _apply_to_all_resource_types((ns, typeName, instance) => {
     instance.applyExtensions();
@@ -84,6 +93,14 @@ function resource_type_for_namespace(ns: any) {
 
       explicit_types[name] = ctor;
     }
+  }
+}
+
+function _apply_to_all_namespaces(operation: (ns: any) => void): void {
+  const globals = globalThis as Record<string, any>;
+  for (const ns_name of Object.keys(globals)) {
+    const ns = globals[ns_name];
+    operation(ns);
   }
 }
 
@@ -161,7 +178,7 @@ function add_relation<T extends Resource>(ctor: new() => T, name: string, relati
   obj[name] = relation;
 }
 
-function get_relation<T extends Resource>(ctor: new() => T, name: string): Relation<T> {
+function get_relation<T extends Resource>(ctor: new() => Resource, name: string): Relation<T> {
    let obj = (get_or_create_singleton(ctor) as any);
 
    return obj[name];
