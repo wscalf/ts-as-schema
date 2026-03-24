@@ -1,0 +1,24 @@
+{
+    "*": [
+        {
+            "verb": "read"
+        },
+        {
+            "verb": "*"
+        },
+        {
+            "verb": "write"
+        }
+    ],
+    "remediations": [
+        {
+            "verb": "read"
+        },
+        {
+            "verb": "*"
+        },
+        {
+            "verb": "write"
+        }
+    ]
+}

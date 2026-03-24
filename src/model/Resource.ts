@@ -65,6 +65,33 @@ function register_extension_invocation(invocation: () => void): void {
   _namespace_extensions.push(invocation);
 }
 
+let _v1_permissions: Record<string, Record<string, {verb: string}[]>> = {};
+
+function register_v1_permission(application: string, resource: string, verb: string): void {
+  if (!_v1_permissions[application]) {
+    _v1_permissions[application] = {};
+  }
+  const app = _v1_permissions[application];
+  _add_v1_permission(app, resource, verb);
+  _add_v1_permission(app, resource, "*");
+  _add_v1_permission(app, "*", verb);
+  _add_v1_permission(app, "*", "*");
+}
+
+function _add_v1_permission(app: Record<string, {verb: string}[]>, resource: string, verb: string): void {
+  if (!app[resource]) {
+    app[resource] = [];
+  }
+  for (let i = 0; i < app[resource].length; i++) {
+    if (app[resource][i].verb === verb) return;
+  }
+  app[resource].push({verb: verb});
+}
+
+function get_v1_permissions(): Record<string, Record<string, {verb: string}[]>> {
+  return _v1_permissions;
+}
+
 function finalize_all_resource_types() {
   const globals = globalThis as Record<string, any>;
 
