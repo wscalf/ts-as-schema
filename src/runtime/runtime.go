@@ -17,6 +17,7 @@ type Runtime struct {
 	vm                          *goja.Runtime
 	finalize_all_resource_types goja.Callable
 	visit_all_resource_types    goja.Callable
+	get_v1_permissions          goja.Callable
 }
 
 func NewRuntime() *Runtime {
@@ -37,6 +38,11 @@ func (r *Runtime) Initialize() error {
 	}
 
 	r.visit_all_resource_types, err = r.getFunction("visit_all_resource_types")
+	if err != nil {
+		return err
+	}
+
+	r.get_v1_permissions, err = r.getFunction("get_v1_permissions")
 	if err != nil {
 		return err
 	}
@@ -120,6 +126,22 @@ func (r *Runtime) PrintTypes() error {
 
 		fmt.Println(key, ":")
 		fmt.Println(string(data))
+	}
+
+	permsValue, err := r.get_v1_permissions(goja.Undefined())
+	if err != nil {
+		return fmt.Errorf("error getting V1 permissions: %w", err)
+	}
+
+	if permsMap, ok := permsValue.Export().(map[string]interface{}); ok {
+		for appName, appPerms := range permsMap {
+			data, err := json.MarshalIndent(appPerms, "", "    ")
+			if err != nil {
+				return err
+			}
+			fmt.Printf("\nV1 Permissions for %s:\n", appName)
+			fmt.Println(string(data))
+		}
 	}
 
 	return nil

@@ -34,6 +34,7 @@ namespace rbac /* Everything in here has a reporter type of 'rbac' */ {
     // This is the equivalent of an extension, though it's a plain old TypeScript function. It takes in the necessary arguments, updates RBAC types, 
     // and returns a workspace_permission that encapsulates how to access the created permission
     export function create_v1_based_workspace_permission(application: string, resource: string, verb: string, v2_perm: string): workspace_permission {
+        register_v1_permission(application, resource, verb);
         // get_relation is part of the runtime and gets a relation object from the given type by name   
         if (get_relation(workspace, v2_perm) != undefined) { //The workspace permission has already been added, so we can short-circuit out. This allows this function to be idempotent.
             return (w: Relation<workspace>) => w.sub(r => (r as any)[v2_perm]);
