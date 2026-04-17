@@ -9,15 +9,16 @@ import (
 
 func main() {
 	schema_js_path := os.Getenv("SCHEMA_JS")
-	r := runtime.NewRuntime()
+	r := runtime.NewRuntime(schema_js_path)
 	err := r.Initialize()
 	if err != nil {
 		fmt.Println("Error initializing runtime:", err)
 		return
 	}
-	err = r.LoadFile(schema_js_path)
+
+	err = r.LoadModulesFromDirectory(schema_js_path)
 	if err != nil {
-		fmt.Println("Error loading schema:", err)
+		fmt.Println("Error loading modules from directory:", err)
 		return
 	}
 

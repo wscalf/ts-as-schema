@@ -12,7 +12,7 @@
             "mode": "exec",
             "program": "${workspaceFolder}/build/interpreter",
             "env": {
-                "SCHEMA_JS": "build/js/schema.js",
+                "SCHEMA_JS": "build/js/schema",
             }
         }
     ]

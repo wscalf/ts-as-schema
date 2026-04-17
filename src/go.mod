@@ -2,6 +2,8 @@ module example.com
 
 go 1.25.6
 
+require github.com/dop251/goja_nodejs v0.0.0-20260212111938-1f56ff5bcf14
+
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -17,7 +19,7 @@ require (
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/zerologr v1.2.3 // indirect
-	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/google/pprof v0.0.0-20250820193118-f64d9cf942d6 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
