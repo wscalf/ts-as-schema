@@ -1,8 +1,10 @@
-log("loading rbac module");
+const resource_type = resource_type_for_namespace(module.exports);
 
-export class principal extends Resource {}
+@resource_type("principal")
+class principal extends Resource {}
 
-export class role extends Resource {
+@resource_type("role")
+class role extends Resource {
     any_any_any = new Relation<principal>(assignable(Cardinality.All, principal, all(principal))); //Equivalent of 'bool' in KSL but more explicit - this relation can be assigned all principals (principal:*) or none when reporting 
 }
 

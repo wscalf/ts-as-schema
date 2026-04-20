@@ -29,3 +29,5 @@ interface SchemaVisitor {
 }
 
 declare function log(...args: any[]): void;
+
+declare var module: any
