@@ -12,6 +12,6 @@ build-interpreter: build-model
 build: build-interpreter build-schema
 
 run: build
-	SCHEMA_JS=build/js/schema.js ./build/interpreter
+	SCHEMA_JS=build/js/schema ./build/interpreter
 
 .PHONY: build-schema build-model build-interpreter build run

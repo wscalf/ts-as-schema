@@ -28,8 +28,6 @@ class Resource {
     return visitor.VisitType(ns, name, relations, fields);
   }
 
-  applyExtensions() {}
-
   finalizeRelations<T extends Resource>(this: T) {
     const props = Object.getOwnPropertyNames(this)
     for (const name of props) {
@@ -64,11 +62,6 @@ function get_or_create_singleton<T extends Resource>(ctor: new() => T): T {
   }
 
   return obj.__instance__;
-}
-
-let _namespace_extensions: (() => void)[] = []
-function register_extension_invocation(invocation: () => void): void {
-  _namespace_extensions.push(invocation);
 }
 
 let _v1_permissions: Record<string, Record<string, {verb: string}[]>> = {};

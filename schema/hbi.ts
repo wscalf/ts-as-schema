@@ -9,9 +9,7 @@ export class host /* resource type for report and check */ extends Resource {
     insights_id = new Field(false, uuid())
     ansible_host = new Field(false, text({maxLength: 255}))
     
-    // Permission objects. Note the !-symbols - these tell TypeScript that they will be assigned before use, so we don't have to give them in initial value
-    // It might be tempting to do something like: private inventory_host_view = rbac.create_v1_based_workspace_permission("inventory", "hosts", "read", "inventory_host_view");, but this is wrong
-    // RBAC may not be loaded yet, so we can't call functions from it yet. Any code from other modules should be called in the applyExtensions() function.
+    // Permission objects - each represents a workspace permission added to RBAC and later checked with has_permission_on_workspace
     private inventory_host_view = create_v1_based_workspace_permission("inventory", "hosts", "read", "inventory_host_view");
     private inventory_host_update = create_v1_based_workspace_permission("inventory", "hosts", "write", "inventory_host_update");
 
