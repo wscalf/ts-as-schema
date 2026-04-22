@@ -1,29 +1,30 @@
 type RelationMutator<T extends Resource> = (body: RelationBody<T>) => RelationBody<T>;
 
 class Relation<T extends Resource> implements RelationBody<T> {
-    constructor(body_factory: () => RelationBody<T>) {
+    constructor(body: RelationBody<T>) {
         this.name = null;
         this.resource = null;
-        this.body_factory = body_factory;
-        this.body = null
+        this.body = body;
     }
 
     sub(accessor: (resource: T) => Relation<Resource>): RelationBody<Resource> {
-        if (this.resource == null) {
-            throw new Error(`no resource attached to relation named ${this.name} - was it finalized?`);
-        }
-        const sub = accessor(this.resource);
-        return new SubRelation(this, sub);
+        return new SubRelation(this, () => {
+            if (this.resource == null) {
+                throw new Error(`no resource attached to relation named ${this.name} - was it finalized?`);
+            }
+            return accessor(this.resource);
+        });
     }
     
     finalize(resource: T, propertyName: string) {
+        log("finalizing", resource.Name, propertyName);
         this.resource = resource;
         this.name = propertyName;
+        log("finalized", resource.Name, propertyName);
     }
 
     private resource: T | null; //Backreference to owning resource type, will be populated by finalizer
-    private body_factory: () => RelationBody<T>;
-    private body: RelationBody<T> | null
+    private body: RelationBody<T>
     
     private name: string | null;
     public get_name(): string {
@@ -33,22 +34,16 @@ class Relation<T extends Resource> implements RelationBody<T> {
 
         return this.name;
     }
-    public get_body(): RelationBody<T> {
-        if (this.body === null) {
-            this.body = this.body_factory();
-        }
-
-        return this.body;
-    }
     
     public replace_body(mutator: RelationMutator<T>): void {
-        let body = this.get_body();
-        this.body = mutator(body);
+        this.body = mutator(this.body);
     }
     
     public VisitRelation(visitor: SchemaVisitor): any {
+        log("visiting relation", this.get_name());
         visitor.BeginRelation(this.get_name());
-        const body = this.get_body().Visit(visitor);
+        const body = this.body.Visit(visitor);
+        log("visited relation", this.get_name());
         return visitor.VisitRelation(this.get_name(), body);
     }
     

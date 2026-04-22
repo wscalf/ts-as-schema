@@ -5,6 +5,7 @@ class Resource {
   }
 
   visit(visitor: SchemaVisitor): any {
+    log("visiting", this.Name, this.Namespace);
     const name = this.Name;
     const ns = this.Namespace;
     let relations: any[] = [];
@@ -13,6 +14,7 @@ class Resource {
     visitor.BeginType(ns, name);
     const props = Object.getOwnPropertyNames(this)
     for (const name of props) {
+      log("visiting property", name);
       const v = (this as any)[name];
       if (v instanceof Relation) {
         relations.push(v.VisitRelation(visitor));
@@ -22,10 +24,9 @@ class Resource {
       }
     }
 
+    log("visited", this.Name, this.Namespace);
     return visitor.VisitType(ns, name, relations, fields);
   }
-
-  applyExtensions() {}
 
   finalizeRelations<T extends Resource>(this: T) {
     const props = Object.getOwnPropertyNames(this)
@@ -40,9 +41,11 @@ class Resource {
   Name: string
   Namespace: string
   finalize(namespace: string, name: string): void {
+    log("finalizing", namespace, name);
     this.Namespace = namespace;
     this.Name = name;
     this.finalizeRelations();
+    log("finalized", namespace, name);
   }
 }
 
@@ -50,6 +53,7 @@ function get_or_create_singleton<T extends Resource>(ctor: new() => T): T {
   const key = "__instance__"
   const obj = ctor as any;
   if (!obj.prototype.hasOwnProperty.call(obj, key)) {
+    log("creating singleton: ", obj.name);
     Object.defineProperty(obj, key, {
       value: new ctor(),
       enumerable: false,
@@ -58,11 +62,6 @@ function get_or_create_singleton<T extends Resource>(ctor: new() => T): T {
   }
 
   return obj.__instance__;
-}
-
-let _namespace_extensions: (() => void)[] = []
-function register_extension_invocation(invocation: () => void): void {
-  _namespace_extensions.push(invocation);
 }
 
 let _v1_permissions: Record<string, Record<string, {verb: string}[]>> = {};
@@ -92,20 +91,24 @@ function get_v1_permissions(): Record<string, Record<string, {verb: string}[]>> 
   return _v1_permissions;
 }
 
-function finalize_all_resource_types() {
-  const globals = globalThis as Record<string, any>;
-
-  _namespace_extensions.forEach(invocation => {
-    invocation()
-  });
-
-  _apply_to_all_resource_types((ns, typeName, instance) => {
-    instance.applyExtensions();
+function initialize_resource_types_in_module(namespace: string, module: any) {
+  const exports = module;
+  const keys = Object.keys(exports);
+  log("initializing module", namespace);
+  _apply_to_all_resource_types(module, (typeName, instance) => {
+    
   })
+  log("initialized module", namespace);
+}
 
-  _apply_to_all_resource_types((ns, typeName, instance) => {
-    instance.finalize(ns, typeName);
+function finalize_resource_types_in_module(namespace: string, module: any) {
+  const exports = module;
+  const keys = Object.keys(exports);
+  log("finalizing module", namespace);
+  _apply_to_all_resource_types(module, (typeName, instance) => {
+    instance.finalize(namespace, typeName);
   })
+  log("finalized module", namespace);
 }
 
 const __ksl_explicit_types = "__ksl_explicit_types";
@@ -131,46 +134,43 @@ function _apply_to_all_namespaces(operation: (ns: any) => void): void {
   }
 }
 
-function _apply_to_all_resource_types(operation: (ns: string, typeName: string, resource: Resource) => void): void {
+function _apply_to_all_resource_types(module: any, operation: (typeName: string, resource: Resource) => void): void {
   const globals = globalThis as Record<string, any>;
-  let visited_types = new Set();
+  let visited_types = new CtorSet();
 
-  for (const ns_name of Object.keys(globals)) {
-    const ns = globals[ns_name]
-
-    const explicit_types = ns[__ksl_explicit_types];
-    if (explicit_types != undefined) {
-      for (const key of Object.keys(explicit_types)) {
-        const ctor = explicit_types[key];
-        const instance = get_or_create_singleton(ctor as new() => Resource);
-        operation(ns_name, key, instance);
-        visited_types.add(ctor);
-      }
+  const explicit_types = module[__ksl_explicit_types];
+  if (explicit_types != undefined) {
+    for (const key of Object.keys(explicit_types)) {
+      const ctor = explicit_types[key];
+      const instance = get_or_create_singleton(ctor as new() => Resource);
+      operation(key, instance);
+      visited_types.add(ctor);
     }
-    
-    for (const key of Object.keys(ns)) {
-      const v = ns[key];
+  }
+  
+  for (const key of Object.keys(module)) {
+    const v = module[key];
 
-      if (typeof v !== "function") continue;
-      if (!("prototype" in v)) continue;
+    if (typeof v !== "function") continue;
+    if (!("prototype" in v)) continue;
 
-      const ctor = v as Function & { prototype?: any };
+    const ctor = v as Function & { prototype?: any };
 
-      if (!ctor.prototype) continue;
-      if (ctor === Resource) continue;
+    if (!ctor.prototype) continue;
+    if (ctor === Resource) continue;
 
-      if (ctor.prototype instanceof Resource) {
-        //Found a type that extends resource!
-        if (visited_types.has(ctor)) continue; //Already visited
-        const instance = get_or_create_singleton(ctor as new() => Resource);
-        operation(ns_name, key, instance);
-        visited_types.add(ctor);
-      }
+    if (ctor.prototype instanceof Resource) {
+      //Found a type that extends resource!
+      if (visited_types.has(ctor)) continue; //Already visited
+      const instance = get_or_create_singleton(ctor as new() => Resource);
+      operation(key, instance);
+      visited_types.add(ctor);
     }
   }
 }
 
-class Set {
+
+class CtorSet {
   private values: any[] = [];
 
   has(v: any) {return this.values.indexOf(v) > -1;}
@@ -181,8 +181,10 @@ class Set {
   }
 }
 
-function visit_all_resource_types(visitor: SchemaVisitor) {
-  _apply_to_all_resource_types((ns, typeName, instance) => {
+
+// This needs to take a value to visit that's the 'exports' from a module
+function visit_resource_types_in_module(module: any, visitor: SchemaVisitor) {
+  _apply_to_all_resource_types(module, (typeName, instance) => {
     instance.visit(visitor);
   })
 }

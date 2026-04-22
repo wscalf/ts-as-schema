@@ -3,37 +3,38 @@ interface RelationBody<T extends Resource> { //Maybe Relation is a distinct type
 }
 
 class SubRelation implements RelationBody<Resource> {
-    constructor(rel: Relation<Resource>, sub: Relation<Resource>) {
+    constructor(rel: Relation<Resource>, sub_accessor: () => Relation<Resource>) {
         this.Rel = rel;
-        this.Sub = sub
+        this.SubAccessor = sub_accessor;
     }
 
     Rel: Relation<Resource>
-    Sub: Relation<Resource>
+    private SubAccessor: () => Relation<Resource>
 
     public Visit(visitor: SchemaVisitor): any {
-        return visitor.VisitSubRelationExpression(this.Rel.get_name(), this.Sub.get_name());
+        const sub = this.SubAccessor();
+        return visitor.VisitSubRelationExpression(this.Rel.get_name(), sub.get_name());
     }
 }
 
 class Assignable<T extends Resource> implements RelationBody<T> {
-    constructor(type: T, cardinality: Cardinality, dataType: DataType) {
+    constructor(type: new() => T, cardinality: Cardinality, dataType: DataType) {
         this.Type = type;
         this.Cardinality = cardinality;
         this.DataType = dataType;
     }
-    Type: T
+    Type: new() => T
     Cardinality: Cardinality
     DataType: DataType
 
     public Visit(visitor: SchemaVisitor): any {
-        return visitor.VisitAssignableExpression(this.Type.Namespace, this.Type.Name, Cardinality[this.Cardinality], this.DataType.visit(visitor));
+        const obj = get_or_create_singleton(this.Type);
+        return visitor.VisitAssignableExpression(obj.Namespace, obj.Name, Cardinality[this.Cardinality], this.DataType.visit(visitor));
     }
 }
 
 function assignable<T extends Resource>(cardinality: Cardinality, type: new() => T, dataType: DataType): Assignable<T> {
-    const obj : T = get_or_create_singleton(type);
-    return new Assignable<T>(obj, cardinality, dataType);
+    return new Assignable<T>(type, cardinality, dataType);
 }
 
 class And<T extends Resource> implements RelationBody<T> {

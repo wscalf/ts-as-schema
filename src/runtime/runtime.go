@@ -5,25 +5,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/dop251/goja"
+	"github.com/dop251/goja_nodejs/require"
 )
 
 //go:embed model.js
 var bootstrapCode string
 
 type Runtime struct {
-	vm                          *goja.Runtime
-	finalize_all_resource_types goja.Callable
-	visit_all_resource_types    goja.Callable
-	get_v1_permissions          goja.Callable
+	vm                                  *goja.Runtime
+	requireModule                       *require.RequireModule
+	modules                             map[string]goja.Value
+	finalize_resource_types_in_module   goja.Callable
+	initialize_resource_types_in_module goja.Callable
+	visit_resource_types_in_module      goja.Callable
+	get_v1_permissions                  goja.Callable
 }
 
-func NewRuntime() *Runtime {
-	return &Runtime{
-		vm: goja.New(),
+func NewRuntime(schemaPath string) *Runtime {
+	registry := require.NewRegistry(
+		require.WithPathResolver(func(base, path string) string {
+			return path
+		}),
+		require.WithLoader(func(path string) ([]byte, error) {
+			return os.ReadFile(filepath.Join(schemaPath, path) + ".js")
+		}),
+	)
+
+	runtime := &Runtime{
+		vm:      goja.New(),
+		modules: make(map[string]goja.Value),
 	}
+
+	runtime.requireModule = registry.Enable(runtime.vm)
+	return runtime
 }
 
 func (r *Runtime) Initialize() error {
@@ -32,12 +50,17 @@ func (r *Runtime) Initialize() error {
 		return err
 	}
 
-	r.finalize_all_resource_types, err = r.getFunction("finalize_all_resource_types")
+	r.finalize_resource_types_in_module, err = r.getFunction("finalize_resource_types_in_module")
 	if err != nil {
 		return err
 	}
 
-	r.visit_all_resource_types, err = r.getFunction("visit_all_resource_types")
+	r.initialize_resource_types_in_module, err = r.getFunction("initialize_resource_types_in_module")
+	if err != nil {
+		return err
+	}
+
+	r.visit_resource_types_in_module, err = r.getFunction("visit_resource_types_in_module")
 	if err != nil {
 		return err
 	}
@@ -72,33 +95,84 @@ func (r *Runtime) getFunction(name string) (goja.Callable, error) {
 	}
 }
 
-func (r *Runtime) call(this *goja.Object, name string, args ...goja.Value) (goja.Value, error) {
-	if fn, ok := goja.AssertFunction(this.Get(name)); ok {
-		return fn(this, args...)
-	} else {
-		return nil, fmt.Errorf("object contains no method %s", name)
+func (r *Runtime) LoadModulesFromDirectory(path string) error {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return err
 	}
+	for _, file := range files {
+		if file.IsDir() {
+			err = r.LoadModulesFromDirectory(filepath.Join(path, file.Name()))
+			if err != nil {
+				return err
+			}
+		} else {
+			moduleName := file.Name()[:len(file.Name())-len(filepath.Ext(file.Name()))]
+			err = r.LoadModule(moduleName)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
-func (r *Runtime) LoadFile(path string) error {
-	content, err := os.ReadFile(path)
+func (r *Runtime) LoadModule(name string) error {
+	path := "./" + name
+	exports, err := r.requireModule.Require(path)
 	if err != nil {
 		return err
 	}
 
-	_, err = r.vm.RunString(string(content))
-	return err
+	r.modules[name] = exports
+
+	return nil
+}
+
+func (r *Runtime) initializeTypes() error {
+	for name, exports := range r.modules {
+		_, err := r.initialize_resource_types_in_module(goja.Undefined(), r.vm.ToValue(name), exports)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *Runtime) finalizeTypes() error {
+	for name, exports := range r.modules {
+		_, err := r.finalize_resource_types_in_module(goja.Undefined(), r.vm.ToValue(name), exports)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *Runtime) visitTypes(visitor any) error {
+	for _, exports := range r.modules {
+		_, err := r.visit_resource_types_in_module(goja.Undefined(), exports, r.vm.ToValue(visitor))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *Runtime) PrintTypes() error {
-	_, err := r.finalize_all_resource_types(goja.Undefined())
+	err := r.initializeTypes()
+	if err != nil {
+		return fmt.Errorf("error in initializing process: %w", err)
+	}
+
+	err = r.finalizeTypes()
 	if err != nil {
 		return fmt.Errorf("error in finalizing process: %w", err)
 	}
 
-	//spiceDbVisitor := NewCopyVisitor()
 	spiceDbVisitor := NewSpiceDBSchemaGeneratingVisitor()
-	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(spiceDbVisitor))
+	err = r.visitTypes(spiceDbVisitor)
 	if err != nil {
 		return fmt.Errorf("error in schema evaluation process: %w", err)
 	}
@@ -113,7 +187,7 @@ func (r *Runtime) PrintTypes() error {
 	fmt.Println(output)
 
 	jsonSchemaVisitor := NewJSONSchemaVisitor()
-	_, err = r.visit_all_resource_types(goja.Undefined(), r.vm.ToValue(jsonSchemaVisitor))
+	err = r.visitTypes(jsonSchemaVisitor)
 	if err != nil {
 		return fmt.Errorf("error in second schema evaluation (for JSONSchema): %w", err)
 	}
