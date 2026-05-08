@@ -1,7 +1,6 @@
 const resource_type = resource_type_for_namespace(module.exports);
 
-@resource_type("principal")
-class principal extends Resource {}
+export class principal extends Resource {}
 
 @resource_type("role")
 class role extends Resource {

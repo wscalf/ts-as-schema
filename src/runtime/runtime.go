@@ -218,6 +218,36 @@ func (r *Runtime) PrintTypes() error {
 		}
 	}
 
+	transformerBuilderVisitor := NewTransformerBuildingVisitor()
+	err = r.visitTypes(transformerBuilderVisitor)
+	if err != nil {
+		return fmt.Errorf("error in transformer building process: %w", err)
+	}
+
+	fmt.Println("Relationships:")
+	transformer := transformerBuilderVisitor.transformer
+	relations := transformer.Transform("hbi", "host", "123", []byte(`{
+		"workspace": "110c061c-4b0f-11f1-bea4-424aa71971ad", 
+		"subscription_manager_id": "3dc5726a-4b0f-11f1-98be-424aa71971ad", 
+		"satellite_id": "1234567890", 
+		"insights_id": "33602180-4b0f-11f1-bb63-424aa71971ad", 
+		"ansible_host": "1234567890"}`))
+	fmt.Println(relations)
+	fmt.Println("--------------------------------")
+	relations = transformer.Transform("ocm", "cluster", "123", []byte(`{
+		"workspace": "b7d7fa0e-4b1f-11f1-8a65-424aa71971ad",  
+		"status": "pending", 
+		"created_at": "2021-01-01T00:00:00Z", 
+		"updated_at": "2021-01-01T00:00:00Z"}`))
+	fmt.Println(relations)
+	fmt.Println("--------------------------------")
+	relations = transformer.Transform("ocm", "cluster", "123", []byte(`{
+		"workspace": "b7d7fa0e-4b1f-11f1-8a65-424aa71971ad",  
+		"status": "ready", 
+		"created_at": "2021-01-01T00:00:00Z", 
+		"updated_at": "2021-01-01T00:00:00Z"}`))
+	fmt.Println(relations)
+
 	return nil
 }
 

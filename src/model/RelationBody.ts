@@ -37,6 +37,28 @@ function assignable<T extends Resource>(cardinality: Cardinality, type: new() =>
     return new Assignable<T>(type, cardinality, dataType);
 }
 
+class Dynamic<T extends Resource> implements RelationBody<T> { // Actually, is this just assignable + a dynamic expression that can be evaluated at runtime?
+    // It's tempting to limit it to type and AtMostOne cardinality, but one usecase requires the All cardinality
+    // We might not need data type since it's not directly assignable
+    constructor(expression: string, cardinality: Cardinality, type: new() => T)  {
+        this.expression = expression;
+        this.type = type;
+        this.cardinality = cardinality;
+    }
+    private expression: string
+    private type: new() => T
+    private cardinality: Cardinality
+
+    public Visit(visitor: SchemaVisitor): any {
+        const obj = get_or_create_singleton(this.type);
+        return visitor.VisitDynamicExpression(obj.Namespace, obj.Name, Cardinality[this.cardinality], this.expression);
+    }
+}
+
+function dynamic<T extends Resource>(expression: string, cardinality: Cardinality, type: new() => T): Dynamic<T> {
+    return new Dynamic<T>(expression, cardinality, type);
+}
+
 class And<T extends Resource> implements RelationBody<T> {
     constructor(left: RelationBody<T>, right: RelationBody<T>) {
         this.Left = left

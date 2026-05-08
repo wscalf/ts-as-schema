@@ -65,6 +65,10 @@ func (v *SpiceDBSchemaGeneratingVisitor) VisitAssignableExpression(typeNamespace
 	return namespace.ComputedUserset(tuple_relation_name)
 }
 
+func (v *SpiceDBSchemaGeneratingVisitor) VisitDynamicExpression(typeNamespace string, typeName string, cardinality string, expression string) *corev1.SetOperation_Child {
+	return v.VisitAssignableExpression(typeNamespace, typeName, cardinality, nil)
+}
+
 func (v *SpiceDBSchemaGeneratingVisitor) BeginRelation(name string) {
 	v.currentRelationName = name
 }

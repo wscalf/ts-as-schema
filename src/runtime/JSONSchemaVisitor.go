@@ -70,6 +70,10 @@ func (v *JSONSchemaVisitor) VisitAssignableExpression(typeNamespace string, type
 	}
 }
 
+func (v *JSONSchemaVisitor) VisitDynamicExpression(typeNamespace string, typeName string, cardinality string, expression string) *jsonschema.Schema {
+	return nil
+}
+
 func (v *JSONSchemaVisitor) handleIndividualAssignable(required bool, data_type *jsonschema.Schema) *jsonschema.Schema {
 	if required {
 		v.required_fields = append(v.required_fields, v.current_element)

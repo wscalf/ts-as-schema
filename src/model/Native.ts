@@ -10,6 +10,7 @@ interface SchemaVisitor {
     VisitRelationExpression(name: string): any
     VisitSubRelationExpression(name: string, sub: string): any
     VisitAssignableExpression(typeNamespace: string, typeName: string, cardinality: string, dataType: any): any
+    VisitDynamicExpression(typeNamespace: string, typeName: string, cardinality: string, expression: string): any
 
     BeginRelation(name: string): void
     // Construct relation expression
